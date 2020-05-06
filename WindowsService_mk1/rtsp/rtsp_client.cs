@@ -17,8 +17,8 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
         private string video_rec_uid = "";
         private string session_time_stamp = "";
 
-        private FileStream fs_v = null;   // запись файлового видео потока
-        private FileStream fs_a = null;   // запись файлового аудио потока
+        private FileStream fs_v = null;   // файловый поток для записи видео
+        private FileStream fs_a = null;   // файловый поток для записи аудио
 
         private string stream_video_format = "";
         private string stream_audio_format = "";
