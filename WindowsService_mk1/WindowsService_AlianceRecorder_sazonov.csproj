@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8792E71E-FE2B-410A-9445-BDA0B5C4D45E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>WindowsService_AlianceRacorder_sazonov</RootNamespace>
+    <AssemblyName>WindowsService_AlianceRacorder_sazonov</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>WindowsService_AlianceRecorder_sazonov.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NoWin32Manifest>true</NoWin32Manifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing.Design" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Vlc.DotNet.Core, Version=3.0.0.0, Culture=neutral, PublicKeyToken=84529da31f4eb963, processorArchitecture=MSIL">
+      <HintPath>..\packages\Vlc.DotNet.Core.3.0.0\lib\net45\Vlc.DotNet.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Vlc.DotNet.Core.Interops, Version=3.0.0.0, Culture=neutral, PublicKeyToken=84529da31f4eb963, processorArchitecture=MSIL">
+      <HintPath>..\packages\Vlc.DotNet.Core.Interops.3.0.0\lib\net45\Vlc.DotNet.Core.Interops.dll</HintPath>
+    </Reference>
+    <Reference Include="Vlc.DotNet.Forms, Version=3.0.0.0, Culture=neutral, PublicKeyToken=84529da31f4eb963, processorArchitecture=MSIL">
+      <HintPath>..\packages\Vlc.DotNet.Forms.3.0.0\lib\net45\Vlc.DotNet.Forms.dll</HintPath>
+    </Reference>
+    <Reference Include="Vlc.DotNet.Wpf, Version=3.0.0.0, Culture=neutral, PublicKeyToken=84529da31f4eb963, processorArchitecture=MSIL">
+      <HintPath>..\packages\Vlc.DotNet.Wpf.3.0.0\lib\net45\Vlc.DotNet.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="rtsp\rstp_lib\AACPayload.cs" />
+    <Compile Include="rtsp\rstp_lib\AMRPayload.cs" />
+    <Compile Include="rtsp\rstp_lib\Authentication.cs" />
+    <Compile Include="rtsp\rstp_lib\BitStream.cs" />
+    <Compile Include="rtsp\rstp_lib\G711Payload.cs" />
+    <Compile Include="rtsp\rstp_lib\H264Payload.cs" />
+    <Compile Include="rtsp\rstp_lib\H265Payload.cs" />
+    <Compile Include="rtsp\rstp_lib\IRTSPTransport.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\PortCouple.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPChunk.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPData.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPHeaderNames.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPMessage.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequest.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestAnnounce.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestDescribe.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestGetParameter.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestOptions.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestPause.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestPlay.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestRecord.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestSetup.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPRequestTeardown.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPResponse.cs" />
+    <Compile Include="rtsp\rstp_lib\Messages\RTSPTransport.cs" />
+    <Compile Include="rtsp\rstp_lib\RTSPListener.cs" />
+    <Compile Include="rtsp\rstp_lib\RTSPMessageEventArgs.cs" />
+    <Compile Include="rtsp\rstp_lib\RTSPTCPTransport.cs" />
+    <Compile Include="rtsp\rstp_lib\RTSPUtils.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\Attribut.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\AttributFmtp.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\AttributRtpMap.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\Bandwidth.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\Connection.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\ConnectionIP4.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\ConnectionIP6.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\EncriptionKey.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\H264Parameter.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\H265Parameter.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\Media.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\Origin.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\SdpFile.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\SdpTimeZone.cs" />
+    <Compile Include="rtsp\rstp_lib\Sdp\Timing.cs" />
+    <Compile Include="rtsp\rstp_lib\UdpSocket.cs" />
+    <Compile Include="rtsp\rtsp_client.cs" />
+    <Compile Include="rtsp\rtsp_connector.cs" />
+    <Compile Include="XmlConverter.cs" />
+    <Compile Include="ProjectInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ProjectInstaller.Designer.cs">
+      <DependentUpon>ProjectInstaller.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Service.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Service.Designer.cs">
+      <DependentUpon>Service.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleHTTPServer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ProjectInstaller.resx">
+      <DependentUpon>ProjectInstaller.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Service.resx">
+      <DependentUpon>Service.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
