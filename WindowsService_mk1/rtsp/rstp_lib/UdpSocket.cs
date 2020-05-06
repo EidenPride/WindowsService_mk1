@@ -7,7 +7,6 @@ namespace Rtsp
 {
     public class UDPSocket
     {
-
         private UdpClient data_socket = null;
         private UdpClient control_socket = null;
 
@@ -21,13 +20,10 @@ namespace Rtsp
         IPAddress data_mcast_addr;
         IPAddress control_mcast_addr;
 
-        /// <summary>
         /// Initializes a new instance of the <see cref="UDPSocket"/> class.
         /// Creates two new UDP sockets using the start and end Port range
-        /// </summary>
         public UDPSocket(int start_port, int end_port)
         {
-
             is_multicast = false;
 
             // open a pair of UDP sockets - one for data (video or audio) and one for the status channel (RTCP messages)
@@ -68,14 +64,10 @@ namespace Rtsp
             }
         }
 
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="UDPSocket"/> class.
         /// Used with Multicast mode with the Multicast Address and Port
-        /// </summary>
         public UDPSocket(String data_multicast_address, int data_multicast_port, String control_multicast_address, int control_multicast_port)
         {
-
             is_multicast = true;
 
             // open a pair of UDP sockets - one for data (video or audio) and one for the status channel (RTCP messages)
@@ -118,9 +110,7 @@ namespace Rtsp
             }
         }
 
-        /// <summary>
         /// Starts this instance.
-        /// </summary>
         public void Start()
         {
             if (data_socket == null || control_socket == null)
@@ -142,9 +132,7 @@ namespace Rtsp
             control_read_thread.Start();
         }
 
-        /// <summary>
         /// Stops this instance.
-        /// </summary>
         public void Stop()
         {
             if (is_multicast)
@@ -157,14 +145,10 @@ namespace Rtsp
             control_socket.Close();
         }
 
-        /// <summary>
         /// Occurs when message is received.
-        /// </summary>
         public event EventHandler<Rtsp.RtspChunkEventArgs> DataReceived;
 
-        /// <summary>
         /// Raises the <see cref="E:DataReceived"/> event.
-        /// </summary>
         /// <param name="rtspChunkEventArgs">The <see cref="Rtsp.RtspChunkEventArgs"/> instance containing the event data.</param>
         protected void OnDataReceived(Rtsp.RtspChunkEventArgs rtspChunkEventArgs)
         {
@@ -174,10 +158,7 @@ namespace Rtsp
                 handler(this, rtspChunkEventArgs);
         }
 
-
-        /// <summary>
         /// Does the video job.
-        /// </summary>
         private void DoWorkerJob(System.Net.Sockets.UdpClient socket, int data_port)
         {
 
@@ -211,20 +192,15 @@ namespace Rtsp
             }
         }
 
-        /// <summary>
         /// Write to the RTP Data Port
-        /// </summary>
         public void Write_To_Data_Port(byte[] data, String hostname, int port) {
             data_socket.Send(data,data.Length, hostname, port);
         }
 
-        /// <summary>
         /// Write to the RTP Control Port
-        /// </summary>
         public void Write_To_Control_Port(byte[] data, String hostname, int port)
         {
             data_socket.Send(data, data.Length, hostname, port);
         }
-
     }
 }

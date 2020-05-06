@@ -7,9 +7,7 @@ namespace Rtsp
 {
     public static class RtspUtils
     {
-        /// <summary>
         /// Registers the URI.
-        /// </summary>
         public static void RegisterUri()
         {
             if (!UriParser.IsKnownScheme("rtsp"))
