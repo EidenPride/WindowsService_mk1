@@ -247,7 +247,9 @@ class SimpleHTTPServer
                 try
                 {
                     var destination = Path.Combine(REC_FOLDER, "Rec_" + _uid + ".mpg");
+                    EVENT_LOG.WriteEntry("Cam - " + _cam);
                     recorder_CAMS camData = GetCamPlayerByID(_cam);
+                    EVENT_LOG.WriteEntry("camData - " + camData);
 
                     if (camData != null)
                     {
@@ -285,12 +287,10 @@ class SimpleHTTPServer
                         }
                         else 
                         {
-                            if (camData.nowRec != destination)
-                            {
-                                camData.CamClient.rec(_uid);
-                                camData.nowRec = destination;
-                                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                            }
+                            EVENT_LOG.WriteEntry("Cam action - " + destination);
+                            camData.CamClient.rec(_uid);
+                            camData.nowRec = destination;
+                            context.Response.StatusCode = (int)HttpStatusCode.OK;
                         }
                     }
 
