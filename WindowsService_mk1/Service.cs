@@ -150,7 +150,7 @@ namespace WindowsService_AlianceRacorder_sazonov
                     _cam.VLCrecorder = null;
                     Uri URL_data = new Uri(recorder_data.cam[i].CamIP);
                     string camIPwithAuth = URL_data.Scheme + "://" + _cam.camLogin + ":" + _cam.camPassword + "@" + URL_data.Host + URL_data.PathAndQuery;
-                    _cam.CamClient = new rtsp_client(camIPwithAuth, 0, recorder_data.recorder.recorderArchiveDir, EVENT_LOG);
+                    _cam.CamClient = new rtsp_client(camIPwithAuth, 0, recorder_data.recorder.recorderArchiveDir, EVENT_LOG, recorder_data.cam[i].CamName, recorder_data.cam[i].camAutoRecconect);
                     RECORDER_CAMS[i] = _cam;
                 }
 
@@ -191,6 +191,7 @@ public class recorder_CAMS
     public VlcMediaPlayer VLCrecorder;
     public rtsp_client CamClient;
     public string nowRec;
+    public bool camAutoRecconect;
 }
 
 // Примечание. Для запуска созданного кода может потребоваться NET Framework версии 4.5 или более поздней версии и .NET Core или Standard версии 2.0 или более поздней.
@@ -244,6 +245,7 @@ public partial class camsInfoCam
     private string camDescriptionField;
     private string camLoginField;
     private string camPasswordField;
+    private bool camAutoRecconectField;
 
     public string CamName
     {
@@ -298,6 +300,17 @@ public partial class camsInfoCam
         set
         {
             this.camPasswordField = value;
+        }
+    }
+    public bool camAutoRecconect
+    {
+        get
+        {
+            return this.camAutoRecconectField;
+        }
+        set
+        {
+            this.camAutoRecconectField = value;
         }
     }
 }

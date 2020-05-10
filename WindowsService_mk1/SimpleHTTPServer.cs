@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading;
 using System.Diagnostics;
 using WindowsService_AlianceRacorder_sazonov.rtsp;
+using Newtonsoft.Json;
 
 class SimpleHTTPServer
 {
@@ -287,10 +288,25 @@ class SimpleHTTPServer
                         }
                         else 
                         {
+                            CameraJSONAnswer reply = new CameraJSONAnswer();
+                            reply.CamID = _cam;
+                            reply.CamAction = _action;
+
                             EVENT_LOG.WriteEntry("Cam action - " + destination);
-                            camData.CamClient.rec(_uid);
-                            camData.nowRec = destination;
+                            if (camData.CamClient.cam_online())
+                            {
+                                camData.CamClient.rec(_uid);
+                                camData.nowRec = destination;
+                                context.Response.ContentType = "application/json";
+                                reply.CamStatus = "Camera - Online, start recording stream to file"; 
+                            }
+                            else
+                            {
+                                reply.CamStatus = "Camera - OffLine, please check camera connection";
+                            }
+                            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(reply, Formatting.Indented));
                             context.Response.StatusCode = (int)HttpStatusCode.OK;
+                            context.Response.OutputStream.Write(bytes, 0, bytes.Length);
                         }
                     }
 
@@ -378,5 +394,12 @@ class SimpleHTTPServer
         
         _serverThread = new Thread(this.Listen);
         _serverThread.Start();
+    }
+
+    public class CameraJSONAnswer
+    {
+        public string CamID { get; set; }
+        public string CamAction { get; set; }
+        public string CamStatus { get; set; }
     }
 }

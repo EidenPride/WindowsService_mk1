@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Timers;
 using System.Windows.Controls;
+using Timer = System.Timers.Timer;
 
 namespace WindowsService_AlianceRacorder_sazonov.rtsp
 {
     public class rtsp_client
     {
         //параметры
+        private string ClassOwner;
         private EventLog EVENT_LOG;
 
         private int bufferization = 0;
@@ -29,17 +33,33 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
 
         rtsp_connector rtsp_con = null;
 
+        private bool AutoRecconect = false;
+
+        //Контроль соединения и реконнект
+        bool NowConnected = false; //соединение существует
+        Stopwatch keepalive_stopwatch = new Stopwatch();
+        Timer keepalive_timer = null;
+        Timer keepalive_autorecconect_timer = null;
+        Timer keepalive_autostop_rec = null;
+        bool NowReconnecting = false;
+
         #region Инициализация и внешние функции
 
         //конструктор класса
-        public rtsp_client(string Cam_URL, int buff, string archive, EventLog _event_log)
+        public rtsp_client(string Cam_URL, int buff, string archive, EventLog _event_log, string _ClassOwner, bool _AutoRecconect)
         {
             set_buffer(buff);
             set_archive_dir(archive);
+            this.ClassOwner = _ClassOwner;
+            this.AutoRecconect = _AutoRecconect;
             this.EVENT_LOG = _event_log;            
             this.rstp_url = Cam_URL;
             this.session_time_stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
+            this.Initialize();
+        }
+        private void Initialize()
+        {
             // создадим коннектор потока
             rtsp_con = new rtsp_connector();
 
@@ -59,6 +79,21 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
             };
             // NALs. Так-же могут включать SPS/PPS для H264
             rtsp_con.Received_NALs += (List<byte[]> nal_units) => {
+                //блок контроля связи - начало
+                if (NowReconnecting) 
+                {
+                    NowReconnecting = false;
+                    EVENT_LOG.WriteEntry("Связь с камерой "+ rstp_url + " востановлена");
+                    if (!video_rec_uid.Equals(""))
+                    {
+                        keepalive_autostop_rec.Stop();
+                        keepalive_autostop_rec = null;
+                    }
+                }
+                NowConnected = true;
+                keepalive_stopwatch_timer_checker();
+                keepalive_stopwatch.Restart();
+                //блок контроля связи - конец
                 if (fs_v != null)
                 {
                     foreach (byte[] nal_unit in nal_units)
@@ -68,7 +103,7 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
                     }
                     fs_v.Flush(true);
                 }
-            };           
+            };
 
             //Звуковой блок
             rtsp_con.Received_G711 += (string format, List<byte[]> g711) => {
@@ -145,8 +180,78 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
             // Подключиться к источнику потока
             rtsp_con.Connect(rstp_url, rtsp_connector.RTP_TRANSPORT.TCP);
         }
+        private void keepalive_stopwatch_timer_checker() 
+        {
+            if (AutoRecconect)
+            {
+                if (!keepalive_stopwatch.IsRunning)
+                {
+                    keepalive_stopwatch.Start();
+                }
+                if (keepalive_timer == null)
+                {
+                    keepalive_timer = new Timer(3000);
+                    keepalive_timer.Elapsed += Eslaped_keepalive_timer;
+                    keepalive_timer.Start();
+                }
+                if (keepalive_autorecconect_timer == null)
+                {
+                    keepalive_autorecconect_timer = new Timer(5000);
+                    keepalive_autorecconect_timer.Elapsed += Eslaped_keepalive_autorecconect_timer;
+                    keepalive_autorecconect_timer.Start();
+                }
+            }
+        }
+        private void Eslaped_keepalive_timer(object sender, ElapsedEventArgs args)
+        {
+            if (AutoRecconect)
+            {
+                if (keepalive_stopwatch.IsRunning)
+                {
+                    if (keepalive_stopwatch.ElapsedMilliseconds > 2000)
+                    {
+                        if (NowConnected)
+                        {
+                            EVENT_LOG.WriteEntry("Отвал соединения, камера - " + rstp_url);
+                            NowConnected = false;
+                            if (!video_rec_uid.Equals(""))
+                            {
+                                EVENT_LOG.WriteEntry("Запись файла приостановлена, камера - " + rstp_url + " не отвечаает.");
+                                keepalive_autostop_rec = new Timer(30000);
+                                keepalive_autostop_rec.Elapsed += Eslaped_keepalive_autostop_rec_timer;
+                                keepalive_autostop_rec.Start();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void Eslaped_keepalive_autorecconect_timer(object sender, ElapsedEventArgs args)
+        {
+            if (AutoRecconect && !NowConnected)
+            {
+                EVENT_LOG.WriteEntry("Попытка переподключения");
+                NowReconnecting = true;
+                // Подключиться к источнику потока
+                Initialize();
+            }
+        }
+        private void Eslaped_keepalive_autostop_rec_timer(object sender, ElapsedEventArgs args)
+        {
+            if (!NowConnected && !this.video_rec_uid.Equals(""))
+            {
+                EVENT_LOG.WriteEntry("Камера не отвечает более 30 сек, отключаю запись файла");
+                stop_rec(this.video_rec_uid);
+            }
+            keepalive_autostop_rec.Stop();
+            keepalive_autostop_rec = null;
+        }
 
         // внешние функции
+        public bool cam_online() 
+        {
+            return NowConnected;
+        }
         public void set_Rec_UID(string Rec_UID) {
             this.video_rec_uid = Rec_UID;
         }
@@ -326,7 +431,6 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
                 this.video_archive_path = path;
             }
         }
-
         #endregion
     }
 }

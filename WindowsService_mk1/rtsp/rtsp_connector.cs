@@ -2,10 +2,13 @@
 using Rtsp.Messages;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Timers;
 
 namespace WindowsService_AlianceRacorder_sazonov.rtsp
 {
@@ -323,10 +326,10 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
 
                 if (keepalive_timer == null)
                 {
-                    // Запуск таймера отправляющего пинги на сервер RTSP каждые 20 секунд
+                    // Запуск таймера отправляющего пинги на сервер RTSP каждые 5 секунд
                     keepalive_timer = new System.Timers.Timer();
                     keepalive_timer.Elapsed += Timer_Elapsed;
-                    keepalive_timer.Interval = 20 * 1000;
+                    keepalive_timer.Interval = 5 * 1000;
                     keepalive_timer.Enabled = true;
 
                     // Отправляем DESCRIBE

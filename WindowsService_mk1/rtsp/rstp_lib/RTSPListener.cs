@@ -469,7 +469,7 @@
             try
             {
                 _stream.EndWrite(result);
-            } catch (Exception e)
+            } catch (Exception error)
             {
                 // Error, for example stream has already been Disposed
                 //TODO - log Error during end send (can be ignored)
