@@ -102,7 +102,6 @@ class SimpleHTTPServer
     static private string CAM_FUNC_REC = "rec";
     static private string CAM_FUNC_STOP = "stop";
     //static private string CAM_FUNC_PAUSE = "pause";
-    private bool use_vlc = false;
 
     public int Port
     {
@@ -254,60 +253,25 @@ class SimpleHTTPServer
 
                     if (camData != null)
                     {
-                        if (use_vlc)
+                        CameraJSONAnswer reply = new CameraJSONAnswer();
+                        reply.CamID = _cam;
+                        reply.CamAction = _action;
+
+                        EVENT_LOG.WriteEntry("Cam action - " + destination);
+                        if (camData.CamClient.cam_online())
                         {
-                            EVENT_LOG.WriteEntry("VLC stream 1 - " + DateTime.Now);
-                            if (camData.VLCrecorder == null)
-                            {
-                                camData.VLCrecorder = new Vlc.DotNet.Core.VlcMediaPlayer(RECORDER_LIBDIR);
-                            }
-
-                            var mediaOptions = new[]
-                               {
-                               ":sout=#file{dst=" + destination + "}",
-                               ":sout-keep",
-                               ":rtsp-frame-buffer-size=1000",
-                               ":network-caching=300",
-                               ":file-caching=80",
-                               ":h264-fps=25"
-                                };
-                            if (camData.nowRec != destination)
-                            {
-                                if (camData.VLCrecorder.IsPlaying())
-                                {
-                                    camData.VLCrecorder.Stop();
-                                    camData.nowRec = "";
-                                }
-
-                                camData.VLCrecorder.SetMedia(new Uri("rtsp://" + camData.camLogin + ":" + camData.camPassword + "@" + camData.camIP), mediaOptions); //"192.168.88.24/0/av0                                                                                                                                      //EVENT_LOG.WriteEntry("VLC rec");
-
-                                camData.VLCrecorder.Play();
-                                camData.nowRec = destination;
-                                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                            }
+                            camData.CamClient.rec(_uid);
+                            camData.nowRec = destination;
+                            context.Response.ContentType = "application/json";
+                            reply.CamStatus = "Camera - Online, start recording stream to file";
                         }
-                        else 
+                        else
                         {
-                            CameraJSONAnswer reply = new CameraJSONAnswer();
-                            reply.CamID = _cam;
-                            reply.CamAction = _action;
-
-                            EVENT_LOG.WriteEntry("Cam action - " + destination);
-                            if (camData.CamClient.cam_online())
-                            {
-                                camData.CamClient.rec(_uid);
-                                camData.nowRec = destination;
-                                context.Response.ContentType = "application/json";
-                                reply.CamStatus = "Camera - Online, start recording stream to file"; 
-                            }
-                            else
-                            {
-                                reply.CamStatus = "Camera - OffLine, please check camera connection";
-                            }
-                            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(reply, Formatting.Indented));
-                            context.Response.StatusCode = (int)HttpStatusCode.OK;
-                            context.Response.OutputStream.Write(bytes, 0, bytes.Length);
+                            reply.CamStatus = "Camera - OffLine, please check camera connection";
                         }
+                        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(reply, Formatting.Indented));
+                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                        context.Response.OutputStream.Write(bytes, 0, bytes.Length);
                     }
 
                 }
@@ -319,28 +283,7 @@ class SimpleHTTPServer
             else if (_action.Equals(CAM_FUNC_STOP))
             {
                 recorder_CAMS camData = GetCamPlayerByID(_cam);
-                if (use_vlc)
-                {
-                    try
-                    {
-                        if (camData.VLCrecorder != null)
-                        {
-                            if (camData.VLCrecorder.IsPlaying())
-                            {
-                                camData.VLCrecorder.Stop();
-                                camData.nowRec = "";
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        EVENT_LOG.WriteEntry("Ошибка VLC - " + ex.ToString());
-                    }
-                }
-                else
-                {
-                    camData.CamClient.stop_rec(_uid);
-                }
+                camData.CamClient.stop_rec(_uid);
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
             }
             else

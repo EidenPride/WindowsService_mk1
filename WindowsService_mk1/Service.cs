@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Reflection;
 using System;
-using Vlc.DotNet.Core;
 using Microsoft.Win32;
 using System.Windows;
 using System.Security.AccessControl;
@@ -147,7 +146,6 @@ namespace WindowsService_AlianceRacorder_sazonov
                     _cam.camDescription = recorder_data.cam[i].CamDescription;
                     _cam.camLogin = recorder_data.cam[i].CamLogin;
                     _cam.camPassword = recorder_data.cam[i].CamPassword;
-                    _cam.VLCrecorder = null;
                     Uri URL_data = new Uri(recorder_data.cam[i].CamIP);
                     string camIPwithAuth = URL_data.Scheme + "://" + _cam.camLogin + ":" + _cam.camPassword + "@" + URL_data.Host + URL_data.PathAndQuery;
                     _cam.CamClient = new rtsp_client(camIPwithAuth, 0, recorder_data.recorder.recorderArchiveDir, EVENT_LOG, recorder_data.cam[i].CamName, recorder_data.cam[i].camAutoRecconect);
@@ -188,7 +186,6 @@ public class recorder_CAMS
     public string camDescription;
     public string camLogin;
     public string camPassword;
-    public VlcMediaPlayer VLCrecorder;
     public rtsp_client CamClient;
     public string nowRec;
     public bool camAutoRecconect;

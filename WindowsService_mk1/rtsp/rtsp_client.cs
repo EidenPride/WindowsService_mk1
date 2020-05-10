@@ -36,6 +36,7 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
         private bool AutoRecconect = false;
 
         //Контроль соединения и реконнект
+        public int StopRec_Countdown = 30;
         bool NowConnected = false; //соединение существует
         Stopwatch keepalive_stopwatch = new Stopwatch();
         Timer keepalive_timer = null;
@@ -217,7 +218,7 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
                             if (!video_rec_uid.Equals(""))
                             {
                                 EVENT_LOG.WriteEntry("Запись файла приостановлена, камера - " + rstp_url + " не отвечаает.");
-                                keepalive_autostop_rec = new Timer(30000);
+                                keepalive_autostop_rec = new Timer(StopRec_Countdown * 1000);
                                 keepalive_autostop_rec.Elapsed += Eslaped_keepalive_autostop_rec_timer;
                                 keepalive_autostop_rec.Start();
                             }
@@ -240,7 +241,7 @@ namespace WindowsService_AlianceRacorder_sazonov.rtsp
         {
             if (!NowConnected && !this.video_rec_uid.Equals(""))
             {
-                EVENT_LOG.WriteEntry("Камера не отвечает более 30 сек, отключаю запись файла");
+                EVENT_LOG.WriteEntry("Камера не отвечает более "+ StopRec_Countdown + " сек, отключаю запись файла");
                 stop_rec(this.video_rec_uid);
             }
             keepalive_autostop_rec.Stop();
