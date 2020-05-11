@@ -113,15 +113,11 @@ class SimpleHTTPServer
     {
         int port;
 
-        if (!RECORDER_DATA.recorderURLPort.Equals(""))
+        if (RECORDER_DATA.recorderURLPort == null)
         {
-            if (!int.TryParse(RECORDER_DATA.recorderURLPort, out port))
-            {
-                EVENT_LOG.WriteEntry("Не удалось получить порт - " + RECORDER_DATA.recorderURLPort + ", запушен порт - 8089");
-                port = 8089;
-            }
-            
-        } 
+            EVENT_LOG.WriteEntry("Не удалось получить порт - " + RECORDER_DATA.recorderURLPort + ", запушен порт - 8089");
+            port = 8089;
+        }
         else
         {
             //get an empty port

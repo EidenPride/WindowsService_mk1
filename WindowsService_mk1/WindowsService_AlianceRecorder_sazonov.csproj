@@ -80,7 +80,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DB\SQL_int.cs" />
+    <Compile Include="DB\DB_int.cs" />
     <Compile Include="rtsp\rstp_lib\AACPayload.cs" />
     <Compile Include="rtsp\rstp_lib\AMRPayload.cs" />
     <Compile Include="rtsp\rstp_lib\Authentication.cs" />

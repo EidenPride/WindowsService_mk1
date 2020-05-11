@@ -9,6 +9,8 @@ using Microsoft.Win32;
 using System.Windows;
 using System.Security.AccessControl;
 using WindowsService_AlianceRacorder_sazonov.rtsp;
+using System.Data.Common;
+using WindowsService_AlianceRacorder_sazonov.DB;
 
 namespace WindowsService_AlianceRacorder_sazonov
 {
@@ -18,6 +20,7 @@ namespace WindowsService_AlianceRacorder_sazonov
         //private int eventId = 1;
         private camsInfo recorder_data;
         private EventLog EVENT_LOG;
+        private DB_int DB;
 
         private recorderInfo RECORDER_DATA;
         private recorder_CAMS[] RECORDER_CAMS;
@@ -28,6 +31,7 @@ namespace WindowsService_AlianceRacorder_sazonov
         public AlianceRacorder_sazonov()
         {
             InitializeComponent();
+            DB = new DB_int(CURRENT_DATA_DIR, EVENT_LOG);
 
             PrepairLog();
             GetData();
@@ -98,7 +102,6 @@ namespace WindowsService_AlianceRacorder_sazonov
             public int dwCheckPoint;
             public int dwWaitHint;
         };
-
         private void SetRegestryKey() 
         {
             string APP_NAME = "Aliance Recorder";
@@ -120,39 +123,41 @@ namespace WindowsService_AlianceRacorder_sazonov
         }
 
         private void GetData() {
-            XmlConverter.Serializer ser = new XmlConverter.Serializer();
+            /*XmlConverter.Serializer ser = new XmlConverter.Serializer();
             string xmlpath = string.Empty;
             string xmlInputData = string.Empty;
-            string xmlOutputData = string.Empty;
-
+            string xmlOutputData = string.Empty;*/
             try
             {
-                xmlpath = Path.Combine(CURRENT_DATA_DIR, "cam.info");
-                xmlInputData = File.ReadAllText(xmlpath);
+                /*xmlpath = Path.Combine(CURRENT_DATA_DIR, "cam.info");
+                xmlInputData = File.ReadAllText(xmlpath);*/
 
-                recorder_data = ser.Deserialize<camsInfo>(xmlInputData);
+                //recorder_data = ser.Deserialize<camsInfo>(xmlInputData);
+                camsInfoCam[] cams = DB.GetCamsArray();
+                EVENT_LOG.WriteEntry("База данных 2- " + cams);
 
-                foreach (camsInfoCam cam in recorder_data.cam)
+                foreach (camsInfoCam cam in cams)
                 {
                     EVENT_LOG.WriteEntry("Есть камера - " + cam.CamName + ", адрес: " + cam.CamIP + "\nОписание: " + cam.CamDescription);
                 }
 
-                RECORDER_CAMS = new recorder_CAMS[recorder_data.cam.Length];
+                RECORDER_CAMS = new recorder_CAMS[cams.Length];
                 for (int i = 0; i < recorder_data.cam.Length; i++)
                 {
                     recorder_CAMS _cam = new recorder_CAMS();
-                    _cam.camName = recorder_data.cam[i].CamName;
-                    _cam.camIP = recorder_data.cam[i].CamIP;
-                    _cam.camDescription = recorder_data.cam[i].CamDescription;
-                    _cam.camLogin = recorder_data.cam[i].CamLogin;
-                    _cam.camPassword = recorder_data.cam[i].CamPassword;
-                    Uri URL_data = new Uri(recorder_data.cam[i].CamIP);
+                    _cam.camName = cams[i].CamName;
+                    _cam.camIP = cams[i].CamIP;
+                    _cam.camDescription = cams[i].CamDescription;
+                    _cam.camLogin = cams[i].CamLogin;
+                    _cam.camPassword = cams[i].CamPassword;
+                    Uri URL_data = new Uri(cams[i].CamIP);
                     string camIPwithAuth = URL_data.Scheme + "://" + _cam.camLogin + ":" + _cam.camPassword + "@" + URL_data.Host + URL_data.PathAndQuery;
-                    _cam.CamClient = new rtsp_client(camIPwithAuth, 0, recorder_data.recorder.recorderArchiveDir, EVENT_LOG, recorder_data.cam[i].CamName, recorder_data.cam[i].camAutoRecconect);
+                    _cam.CamClient = new rtsp_client(camIPwithAuth, 0, recorder_data.recorder.recorderArchiveDir, EVENT_LOG, cams[i].CamName, cams[i].camAutoRecconect);
                     RECORDER_CAMS[i] = _cam;
                 }
 
-                RECORDER_DATA = recorder_data.recorder;
+                //RECORDER_DATA = recorder_data.recorder;
+                RECORDER_DATA = DB.GetRecorderSetup();//recorderInfo 
                 EVENT_LOG.WriteEntry("Архив - " + RECORDER_DATA.recorderArchiveDir);
                 EVENT_LOG.WriteEntry("Адрес веб сервера - " + RECORDER_DATA.recorderURL);
                 EVENT_LOG.WriteEntry("Порт веб сервера - " + RECORDER_DATA.recorderURLPort);
@@ -237,6 +242,7 @@ public partial class camsInfo
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
 public partial class camsInfoCam
 {
+    private string CamUIDField;
     private string camNameField;
     private string camIPField;
     private string camDescriptionField;
@@ -244,6 +250,17 @@ public partial class camsInfoCam
     private string camPasswordField;
     private bool camAutoRecconectField;
 
+    public string CamUID 
+    {
+        get
+        {
+            return this.CamUIDField;
+        }
+        set
+        {
+            this.CamUIDField = value;
+        }
+    }
     public string CamName
     {
         get
@@ -315,7 +332,7 @@ public partial class camsInfoCam
 public partial class recorderInfo 
 {
     private string recorderURLField;
-    private string recorderURLPortField;
+    private int recorderURLPortField;
     private string recorderLoginField;
     private string recorderPasswordField;
     private string recorderArchiveDirField;
@@ -331,7 +348,7 @@ public partial class recorderInfo
             this.recorderURLField = value;
         }
     }
-    public string recorderURLPort 
+    public int recorderURLPort 
     {
         get
         {
