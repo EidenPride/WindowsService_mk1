@@ -1,15 +1,12 @@
 ﻿using System.Diagnostics;
 using System.ServiceProcess;
-using System.Timers;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Reflection;
 using System;
 using Microsoft.Win32;
-using System.Windows;
 using System.Security.AccessControl;
 using WindowsService_AlianceRacorder_sazonov.rtsp;
-using System.Data.Common;
 using WindowsService_AlianceRacorder_sazonov.DB;
 
 namespace WindowsService_AlianceRacorder_sazonov
@@ -18,26 +15,60 @@ namespace WindowsService_AlianceRacorder_sazonov
     {
         private SimpleHTTPServer myServer;
         //private int eventId = 1;
-        private camsInfo recorder_data;
         private EventLog EVENT_LOG;
-        private DB_int DB;
+        private storage_int ST;
 
-        private recorderInfo RECORDER_DATA;
+        private RecorderSetup RECORDER_DATA;
         private recorder_CAMS[] RECORDER_CAMS;
         private string CURRENT_DIR = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
         private string CURRENT_DATA_DIR = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "data");
         private string CURRENT_INT_DIR = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "interface");
 
+        #region Описание классов данных регистратора
+
+        public class recorder_CAMS
+        {
+            public string camName;
+            public string camIP;
+            public string camDescription;
+            public string camLogin;
+            public string camPassword;
+            public rtsp_client CamClient;
+            public string nowRec;
+            public bool camAutoRecconect;
+        }
+        public class RecorderSetup
+        {
+            public string recorderURL { get; set; }
+            public int recorderURLPort { get; set; }
+            public string recorderLogin { get; set; }
+            public string recorderPassword { get; set; }
+            public string recorderArchiveDir { get; set; }
+        }
+        public class CamsSetup
+        {
+            public string CamID { get; set; }
+            public string CamName { get; set; }
+            public string CamIP { get; set; }
+            public string CamDescription { get; set; }
+            public string CamLogin { get; set; }
+            public string CamPassword { get; set; }
+            public bool camAutoRecconect { get; set; }
+        }
+
+        #endregion
+
         public AlianceRacorder_sazonov()
         {
             InitializeComponent();
-            DB = new DB_int(CURRENT_DATA_DIR, EVENT_LOG);
+            ST = new storage_int(CURRENT_DATA_DIR, EVENT_LOG);
 
             PrepairLog();
             GetData();
             SetRegestryKey();
         }
 
+        #region Управление службой
         protected override void OnStart(string[] args)
         {
             // Update the service state to Start Pending after 10 sec.
@@ -54,9 +85,8 @@ namespace WindowsService_AlianceRacorder_sazonov
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
-            EVENT_LOG.WriteEntry("In OnStart.");
+            EVENT_LOG.WriteEntry("Служба успешно запущена");
         }
-
         protected override void OnStop()
         {
             // Update the service state to Stop Pending.
@@ -71,15 +101,14 @@ namespace WindowsService_AlianceRacorder_sazonov
             serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
-
         protected override void OnContinue()
         {
             eventLog.WriteEntry("In OnContinue.");
         }
+        #endregion
 
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(System.IntPtr handle, ref ServiceStatus serviceStatus);
-
         public enum ServiceState
         {
             SERVICE_STOPPED = 0x00000001,
@@ -90,7 +119,6 @@ namespace WindowsService_AlianceRacorder_sazonov
             SERVICE_PAUSE_PENDING = 0x00000006,
             SERVICE_PAUSED = 0x00000007,
         }
-
         [StructLayout(LayoutKind.Sequential)]
         public struct ServiceStatus
         {
@@ -102,6 +130,7 @@ namespace WindowsService_AlianceRacorder_sazonov
             public int dwCheckPoint;
             public int dwWaitHint;
         };
+        
         private void SetRegestryKey() 
         {
             string APP_NAME = "Aliance Recorder";
@@ -121,28 +150,36 @@ namespace WindowsService_AlianceRacorder_sazonov
                 key.SetValue("APP_DIR", CURRENT_DIR);
             } 
         }
-
         private void GetData() {
-            /*XmlConverter.Serializer ser = new XmlConverter.Serializer();
-            string xmlpath = string.Empty;
-            string xmlInputData = string.Empty;
-            string xmlOutputData = string.Empty;*/
             try
             {
-                /*xmlpath = Path.Combine(CURRENT_DATA_DIR, "cam.info");
-                xmlInputData = File.ReadAllText(xmlpath);*/
+                CamsSetup[] cams = ST.GetCamsArray();
+                RECORDER_DATA = ST.GetRecorderSetup();
 
-                //recorder_data = ser.Deserialize<camsInfo>(xmlInputData);
-                camsInfoCam[] cams = DB.GetCamsArray();
-                EVENT_LOG.WriteEntry("База данных 2- " + cams);
-
-                foreach (camsInfoCam cam in cams)
+                string log = "";
+                log += "------------------------------------------\n";
+                log += "данные регистратора\n";
+                log += "------------------------------------------\n";
+                log += "Архив - " + RECORDER_DATA.recorderArchiveDir + "\n";
+                log += "Адрес веб сервера - " + RECORDER_DATA.recorderURL + "\n";
+                log += "Порт веб сервера - " + RECORDER_DATA.recorderURLPort + "\n";
+                
+                if (cams.Length > 0)
                 {
-                    EVENT_LOG.WriteEntry("Есть камера - " + cam.CamName + ", адрес: " + cam.CamIP + "\nОписание: " + cam.CamDescription);
+                    log += "------------------------------------------\n";
+                    log += "данные по камерам\n";
+                    log += "------------------------------------------\n";
+
+                    foreach (CamsSetup cam in cams)
+                    {
+                        log += "Камера - " + cam.CamName + ", адрес: " + cam.CamIP + ", идентификатор: " + cam.CamID + "\nОписание: " + cam.CamDescription + "\n\n";
+                    }
                 }
+                
+                EVENT_LOG.WriteEntry(log);
 
                 RECORDER_CAMS = new recorder_CAMS[cams.Length];
-                for (int i = 0; i < recorder_data.cam.Length; i++)
+                for (int i = 0; i < cams.Length; i++)
                 {
                     recorder_CAMS _cam = new recorder_CAMS();
                     _cam.camName = cams[i].CamName;
@@ -152,22 +189,15 @@ namespace WindowsService_AlianceRacorder_sazonov
                     _cam.camPassword = cams[i].CamPassword;
                     Uri URL_data = new Uri(cams[i].CamIP);
                     string camIPwithAuth = URL_data.Scheme + "://" + _cam.camLogin + ":" + _cam.camPassword + "@" + URL_data.Host + URL_data.PathAndQuery;
-                    _cam.CamClient = new rtsp_client(camIPwithAuth, 0, recorder_data.recorder.recorderArchiveDir, EVENT_LOG, cams[i].CamName, cams[i].camAutoRecconect);
+                    _cam.CamClient = new rtsp_client(camIPwithAuth, 0, RECORDER_DATA.recorderArchiveDir, EVENT_LOG, cams[i].CamName, cams[i].camAutoRecconect);
                     RECORDER_CAMS[i] = _cam;
-                }
-
-                //RECORDER_DATA = recorder_data.recorder;
-                RECORDER_DATA = DB.GetRecorderSetup();//recorderInfo 
-                EVENT_LOG.WriteEntry("Архив - " + RECORDER_DATA.recorderArchiveDir);
-                EVENT_LOG.WriteEntry("Адрес веб сервера - " + RECORDER_DATA.recorderURL);
-                EVENT_LOG.WriteEntry("Порт веб сервера - " + RECORDER_DATA.recorderURLPort);
+                }      
             }
             catch (Exception ex)
             {
                 EVENT_LOG.WriteEntry("Ошибка чтения настроек - " + ex.ToString());
             }
         }
-
         private void PrepairLog() {
 
             EVENT_LOG = new System.Diagnostics.EventLog();
@@ -181,217 +211,3 @@ namespace WindowsService_AlianceRacorder_sazonov
         }
     }
 }
-
-#region Описание классов данных регистратора
-
-public class recorder_CAMS
-{
-    public string camName;
-    public string camIP;
-    public string camDescription;
-    public string camLogin;
-    public string camPassword;
-    public rtsp_client CamClient;
-    public string nowRec;
-    public bool camAutoRecconect;
-}
-
-// Примечание. Для запуска созданного кода может потребоваться NET Framework версии 4.5 или более поздней версии и .NET Core или Standard версии 2.0 или более поздней.
-/// <remarks/>
-[System.SerializableAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
-[System.Xml.Serialization.XmlRootAttribute(Namespace = "", IsNullable = false)]
-public partial class camsInfo
-{
-    private recorderInfo recorderField;
-    private camsInfoCam[] camField;
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("cam")]
-    public camsInfoCam[] cam
-    {
-        get
-        {
-            return this.camField;
-        }
-        set
-        {
-            this.camField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("recorder")]
-    public recorderInfo recorder
-    {
-        get
-        {
-            return this.recorderField;
-        }
-        set
-        {
-            this.recorderField = value;
-        }
-    }
-}
-
-/// <remarks/>
-[System.SerializableAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
-public partial class camsInfoCam
-{
-    private string CamUIDField;
-    private string camNameField;
-    private string camIPField;
-    private string camDescriptionField;
-    private string camLoginField;
-    private string camPasswordField;
-    private bool camAutoRecconectField;
-
-    public string CamUID 
-    {
-        get
-        {
-            return this.CamUIDField;
-        }
-        set
-        {
-            this.CamUIDField = value;
-        }
-    }
-    public string CamName
-    {
-        get
-        {
-            return this.camNameField;
-        }
-        set
-        {
-            this.camNameField = value;
-        }
-    }
-    public string CamIP
-    {
-        get
-        {
-            return this.camIPField;
-        }
-        set
-        {
-            this.camIPField = value;
-        }
-    }
-    public string CamDescription
-    {
-        get
-        {
-            return this.camDescriptionField;
-        }
-        set
-        {
-            this.camDescriptionField = value;
-        }
-    }
-    public string CamLogin
-    {
-        get
-        {
-            return this.camLoginField;
-        }
-        set
-        {
-            this.camLoginField = value;
-        }
-    }
-    public string CamPassword
-    {
-        get
-        {
-            return this.camPasswordField;
-        }
-        set
-        {
-            this.camPasswordField = value;
-        }
-    }
-    public bool camAutoRecconect
-    {
-        get
-        {
-            return this.camAutoRecconectField;
-        }
-        set
-        {
-            this.camAutoRecconectField = value;
-        }
-    }
-}
-
-public partial class recorderInfo 
-{
-    private string recorderURLField;
-    private int recorderURLPortField;
-    private string recorderLoginField;
-    private string recorderPasswordField;
-    private string recorderArchiveDirField;
-
-    public string recorderURL 
-    {
-        get
-        {
-            return this.recorderURLField;
-        }
-        set
-        {
-            this.recorderURLField = value;
-        }
-    }
-    public int recorderURLPort 
-    {
-        get
-        {
-            return this.recorderURLPortField;
-        }
-        set
-        {
-            this.recorderURLPortField = value;
-        }
-    }
-    public string recorderLogin
-    {
-        get
-        {
-            return this.recorderLoginField;
-        }
-        set
-        {
-            this.recorderLoginField = value;
-        }
-    }
-    public string recorderPassword
-    {
-        get
-        {
-            return this.recorderPasswordField;
-        }
-        set
-        {
-            this.recorderPasswordField = value;
-        }
-    }
-    public string recorderArchiveDir
-    {
-        get
-        {
-            return this.recorderArchiveDirField;
-        }
-        set
-        {
-            this.recorderArchiveDirField = value;
-        }
-    }
-}
-
-#endregion

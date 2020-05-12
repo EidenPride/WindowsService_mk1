@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Timers;
-using System.Windows.Controls;
 using Timer = System.Timers.Timer;
 
 namespace WindowsService_AlianceRacorder_sazonov.rtsp

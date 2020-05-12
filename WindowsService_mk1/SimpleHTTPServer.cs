@@ -8,8 +8,8 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using System.Diagnostics;
-using WindowsService_AlianceRacorder_sazonov.rtsp;
 using Newtonsoft.Json;
+using static WindowsService_AlianceRacorder_sazonov.AlianceRacorder_sazonov;
 
 class SimpleHTTPServer
 {
@@ -19,6 +19,12 @@ class SimpleHTTPServer
         "default.html",
         "default.htm"
     };
+
+    private readonly string[] _dataFiles = {
+        "index.js",
+        "index.css"
+    };
+
 
     private static IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
         #region extension to MIME type list
@@ -109,22 +115,18 @@ class SimpleHTTPServer
         private set { }
     }
 
-    public SimpleHTTPServer(recorderInfo RECORDER_DATA, recorder_CAMS[] RECORDER_CAMS, EventLog EVENT_LOG, string CURRENT_DIR, string CURRENT_INT_DIR)
+    public SimpleHTTPServer(RecorderSetup RECORDER_DATA, recorder_CAMS[] RECORDER_CAMS, EventLog EVENT_LOG, string CURRENT_DIR, string CURRENT_INT_DIR)
     {
-        int port;
+        int port = RECORDER_DATA.recorderURLPort;
 
-        if (RECORDER_DATA.recorderURLPort == null)
-        {
-            EVENT_LOG.WriteEntry("Не удалось получить порт - " + RECORDER_DATA.recorderURLPort + ", запушен порт - 8089");
-            port = 8089;
-        }
-        else
+        if (port <= 0)
         {
             //get an empty port
             TcpListener l = new TcpListener(IPAddress.Loopback, 0);
             l.Start();
             port = ((IPEndPoint)l.LocalEndpoint).Port;
             l.Stop();
+            EVENT_LOG.WriteEntry("Не удалось получить порт - " + RECORDER_DATA.recorderURLPort + ", использован порт - " + port);
         }
         
         this.Initialize(port, RECORDER_DATA, RECORDER_CAMS, EVENT_LOG, CURRENT_DIR, CURRENT_INT_DIR);
@@ -319,8 +321,7 @@ class SimpleHTTPServer
 
         return camData;
     }
-
-    private void Initialize(int port, recorderInfo RECORDER_DATA, recorder_CAMS[] RECORDER_CAMS, EventLog EVENT_LOG, string CURRENT_DIR, string CURRENT_INT_DIR)
+    private void Initialize(int port, RecorderSetup RECORDER_DATA, recorder_CAMS[] RECORDER_CAMS, EventLog EVENT_LOG, string CURRENT_DIR, string CURRENT_INT_DIR)
     {
         this.CURRENT_DIR = CURRENT_DIR;
         this.CURRENT_INT_DIR = CURRENT_INT_DIR;
@@ -334,7 +335,6 @@ class SimpleHTTPServer
         _serverThread = new Thread(this.Listen);
         _serverThread.Start();
     }
-
     public class CameraJSONAnswer
     {
         public string CamID { get; set; }
