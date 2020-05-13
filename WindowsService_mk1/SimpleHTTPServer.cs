@@ -57,7 +57,7 @@ class SimpleHTTPServer
         {".jnlp", "application/x-java-jnlp-file"},
         {".jpeg", "image/jpeg"},
         {".jpg", "image/jpeg"},
-        {".js", "application/x-javascript"},
+        {".js", "application/javascript"},
         {".mml", "text/mathml"},
         {".mng", "video/x-mng"},
         {".mov", "video/quicktime"},
@@ -170,51 +170,8 @@ class SimpleHTTPServer
         string localpath = context.Request.Url.LocalPath;
         string query = context.Request.Url.Query;
         string pathandquery = context.Request.Url.PathAndQuery;
-
-        filename = filename.Substring(1);
-
-        if (string.IsNullOrEmpty(filename))
-        {
-            foreach (string indexFile in _indexFiles)
-            {
-                if (File.Exists(Path.Combine(CURRENT_INT_DIR, indexFile)))
-                {
-                    filename = indexFile;
-                    break;
-                }
-            }
-        }
-        filename = Path.Combine(CURRENT_INT_DIR, filename);
-        if (File.Exists(filename))
-        {
-            try
-            {
-                Stream input = new FileStream(filename, FileMode.Open);
-
-                //Adding permanent http response headers
-                string mime;
-                context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out mime) ? mime : "application/octet-stream";
-                context.Response.ContentLength64 = input.Length;
-                context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
-                context.Response.AddHeader("Last-Modified", System.IO.File.GetLastWriteTime(filename).ToString("r"));
-
-                byte[] buffer = new byte[1024 * 16];
-                int nbytes;
-                while ((nbytes = input.Read(buffer, 0, buffer.Length)) > 0)
-                    context.Response.OutputStream.Write(buffer, 0, nbytes);
-                input.Close();
-
-                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                context.Response.OutputStream.Flush();
-            }
-            catch (Exception ex)
-            {
-                EVENT_LOG.WriteEntry("Error read input - " + ex.ToString());
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            }
-
-        }
-        else if (localpath.IndexOf("camcommand") != -1)
+ 
+        if (localpath.IndexOf("camcommand") != -1)
         {
             string _cam = "";
             string _action = "";
@@ -293,7 +250,6 @@ class SimpleHTTPServer
         }
         else if (localpath.IndexOf("servercommand") != -1)
         {
-
             string[] commands = query.Split('&');
 
             foreach (string command in commands)
@@ -303,8 +259,56 @@ class SimpleHTTPServer
                     context.Response.StatusCode = (int)HttpStatusCode.OK;
                 }
             }
-            
+
             context.Response.OutputStream.Close();
+        }
+        else 
+        {
+            filename = filename.Substring(1);
+
+            if (string.IsNullOrEmpty(filename))
+            {
+                foreach (string indexFile in _indexFiles)
+                {
+                    if (File.Exists(Path.Combine(CURRENT_INT_DIR, indexFile)))
+                    {
+                        filename = indexFile;
+                        break;
+                    }
+                }
+            }
+            filename = Path.Combine(CURRENT_INT_DIR, filename);
+            if (File.Exists(filename))
+            {
+                try
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+
+                    Stream input = new FileStream(filename, FileMode.Open);
+
+                    //Adding permanent http response headers
+                    string mime;
+                    context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out mime) ? mime : "application/octet-stream";
+                    context.Response.ContentLength64 = input.Length;
+                    context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
+                    context.Response.AddHeader("Last-Modified", File.GetLastWriteTime(filename).ToString("r"));
+
+                    byte[] buffer = new byte[1024 * 16];
+                    int nbytes;
+                    while ((nbytes = input.Read(buffer, 0, buffer.Length)) > 0)
+                        context.Response.OutputStream.Write(buffer, 0, nbytes);
+                    input.Close();
+
+                    //context.Response.OutputStream.Flush();
+                    context.Response.OutputStream.FlushAsync();
+                }
+                catch (Exception ex)
+                {
+                    EVENT_LOG.WriteEntry("Error read input - " + ex.ToString());
+                    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                }
+
+            }
         };
     }
 

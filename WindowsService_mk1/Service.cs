@@ -79,7 +79,7 @@ namespace WindowsService_AlianceRacorder_sazonov
 
             //create server with auto assigned port
             myServer = new SimpleHTTPServer(RECORDER_DATA, RECORDER_CAMS, EVENT_LOG, CURRENT_DIR, CURRENT_INT_DIR);
-            EVENT_LOG.WriteEntry("Recorder command server is running on port: " + myServer.Port.ToString());
+            EVENT_LOG.WriteEntry("Сервер регистратора запущен, порт - " + myServer.Port.ToString());
 
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
